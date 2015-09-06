@@ -1,0 +1,286 @@
+import pandas as pd
+import numpy
+import collections
+
+#inlezen train.csv titanic-file
+titanic = pd.read_csv("C:/Users/Tinka/Documents/Kaggle/Titanic/Data/train.csv",delimiter=';')
+
+########################################### PREPARING THE TRAINING DATA SET ###########################################################
+
+#samenvatting van de kolommen, je ziet dat de datatypes veelal fout zijn
+#print([titanic[column].describe() for column in list(titanic)])
+
+#dat ga ik corrigeren voor de kolom "Age", ik maak er een string van, vervang alle komma's door punten
+titanic["Age"] = [str(item) for item in titanic["Age"]]
+titanic["Age"] = [item.replace(",",".") for item in titanic["Age"]]
+#ik maak een extra float kolom Lftd aan om de mediaan te kunnen berekenen
+titanic["Lftd"] = [item.replace(",",".") for item in titanic["Age"]]
+titanic["Lftd"] = [float(item) for item in titanic["Lftd"]]
+medianlftd = str(titanic["Lftd"].median())
+#de nan-waarden vervang ik door de mediaan
+titanic["Age"] = [item.replace("nan",medianlftd) for item in titanic["Age"]]
+#ik converteer "Age" naar het float-type en drop de Lftd-kolom
+titanic["Age"] = [float(item) for item in titanic["Age"]]
+titanic = titanic.drop("Lftd", 1)
+
+#dat ga ik corrigeren voor de kolom "Fare", op dezelfde manier, ik maak er een string van, vervang alle komma's door punten
+titanic["Fare"] = [str(item) for item in titanic["Fare"]]
+titanic["Fare"] = [item.replace(",",".") for item in titanic["Fare"]]
+#ik maak een extra float kolom Tarief aan om de mediaan te kunnen berekenen
+titanic["Tarief"] = [item.replace(",",".") for item in titanic["Fare"]]
+titanic["Tarief"] = [float(item) for item in titanic["Tarief"]]
+medianTarief = str(titanic["Tarief"].median())
+#de nan-waarden vervang ik door de mediaan
+titanic["Fare"] = [item.replace("nan",medianTarief) for item in titanic["Fare"]]
+#ik converteer "Fare" naar het float-type en drop de Tarief-kolom
+titanic["Fare"] = [float(item) for item in titanic["Fare"]]
+titanic = titanic.drop("Tarief", 1)
+
+#dat ga ik corrigeren voor de kolom "Survived", op dezelfde manier, ik maak er een string van, vervang alle komma's door punten
+titanic["Survived"] = [str(item) for item in titanic["Survived"]]
+titanic["Survived"] = [item.replace(",",".") for item in titanic["Survived"]]
+#ik maak een extra float kolom Overleefd aan om de mediaan te kunnen berekenen
+#titanic["Overleefd"] = [item.replace(",",".") for item in titanic["Survived"]]
+#titanic["Overleefd"] = [float(item) for item in titanic["Overleefd"]]
+#medianOverleefd = str(titanic["Overleefd"].median())
+#de nan-waarden vervang ik door de mediaan
+#titanic["Survived"] = [item.replace("nan",medianOverleefd) for item in titanic["Survived"]]
+#ik converteer "Survived" naar het float-type en drop de Overleefd-kolom
+titanic["Survived"] = [float(item) for item in titanic["Survived"]]
+#titanic = titanic.drop("Overleefd", 1)
+
+#print([titanic[column].describe() for column in list(titanic)])
+#print(collections.Counter(titanic["Age"]))
+
+#print(titanic["Sex"].describe())
+#print(titanic["Sex"].unique())
+
+#ik vervang male door de waarde 0 en female door de waarde 1
+titanic.loc[titanic["Sex"] == "male", "Sex"] = 0
+titanic.loc[titanic["Sex"] == "female", "Sex"] = 1
+
+#print(titanic["Sex"].describe())
+#print(titanic["Sex"].unique())
+
+
+#print(titanic["Embarked"].unique())
+
+#ik vervang de nan-waarden in Embarked door S, de meest voorkomende code
+titanic["Embarked"].fillna('S', inplace=True)
+
+#We'll assign the code 0 to S, 1 to C and 2 to Q. Replace each value in the Embarked column with its corresponding code.
+titanic.loc[titanic["Embarked"] == "S", "Embarked"] = 0
+titanic.loc[titanic["Embarked"] == "C", "Embarked"] = 1
+titanic.loc[titanic["Embarked"] == "Q", "Embarked"] = 2
+
+#print(titanic["Embarked"].unique())
+#print(titanic["Survived"].describe())
+#print(titanic["Pclass"].describe())
+#print(titanic["SibSp"].describe())
+#print(titanic["Parch"].describe())
+#print(titanic["Fare"].describe())
+#print(titanic["Survived"].describe())
+
+
+print(titanic["Survived"])
+print(titanic["Survived"].describe())
+print(titanic["Survived"].unique())
+
+
+
+###################################### MAKING PREDICTIONS #####################################################
+
+# Import the linear regression class
+
+from sklearn.linear_model import LinearRegression
+
+# Sklearn also has a helper that makes it easy to do cross validation
+
+from sklearn.cross_validation import KFold
+
+
+
+# The columns we'll use to predict the target
+
+predictors = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]
+
+
+
+# Initialize our algorithm class
+
+alg = LinearRegression()
+
+
+# Generate cross validation folds for the titanic dataset.  It return the row indices corresponding to train and test.
+# We set random_state to ensure we get the same splits every time we run this.
+
+kf = KFold(titanic.shape[0], n_folds=3, random_state=1)
+
+
+
+predictions = []
+
+for train, test in kf:
+    
+	# The predictors we're using the train the algorithm.  Note how we only take the rows in the train folds.
+    
+	train_predictors = (titanic[predictors].iloc[train,:])
+    
+	# The target we're using to train the algorithm.
+    
+	train_target = titanic["Survived"].iloc[train]
+    
+	# Training the algorithm using the predictors and target.
+    
+	alg.fit(train_predictors, train_target)
+    
+	# We can now make predictions on the test fold
+    
+	test_predictions = alg.predict(titanic[predictors].iloc[test,:])
+    
+	predictions.append(test_predictions)
+
+
+
+#print(predictions)
+
+
+#################################### EVALUATING ERROR ##########################################################
+
+import numpy as np
+
+
+
+# The predictions are in three separate numpy arrays.  Concatenate them into one.  
+
+# We concatenate them on axis 0, as they only have one axis.
+
+predictions = np.concatenate(predictions, axis=0)
+
+
+
+# Map predictions to outcomes (only possible outcomes are 1 and 0)
+
+predictions[predictions > .5] = 1
+
+predictions[predictions <=.5] = 0
+
+
+accuracy = float(sum(predictions == titanic["Survived"])) / float(len(predictions))
+print(accuracy)
+
+
+################################### LOGISTIC REGRESSION ########################################################
+
+from sklearn import cross_validation
+
+
+from sklearn.linear_model import LogisticRegression
+
+# Initialize our algorithm
+
+alg = LogisticRegression(random_state=1)
+
+# Compute the accuracy score for all the cross validation folds.  (much simpler than what we did before!)
+
+scores = cross_validation.cross_val_score(alg, titanic[predictors], titanic["Survived"], cv=3)
+
+# Take the mean of the scores (because we have one for each fold)
+
+print(scores.mean())
+
+
+########################################### PREPARING THE TEST DATA SET ###########################################################
+
+#inlezen test.csv titanic-file
+titanic_test = pd.read_csv("C:/Users/Tinka/Documents/Kaggle/Titanic/Data/test.csv",delimiter=';')
+
+
+#kolom "Survived" ontbreekt hier
+
+#samenvatting van de kolommen, je ziet dat de datatypes veelal fout zijn
+#print([titanic_test[column].describe() for column in list(titanic_test)])
+
+#dat ga ik corrigeren voor de kolom "Age", ik maak er een string van, vervang alle komma's door punten
+titanic_test["Age"] = [str(item) for item in titanic_test["Age"]]
+titanic_test["Age"] = [item.replace(",",".") for item in titanic_test["Age"]]
+#ik maak een extra float kolom Lftd aan om de mediaan te kunnen berekenen
+
+#de nan-waarden vervang ik door de mediaan. LET OP! Dit moet dezelfde waarde zijn als in de trainingset, dus niet de mediaan van de testset
+titanic_test["Age"] = [item.replace("nan",medianlftd) for item in titanic_test["Age"]]
+#ik converteer "Age" naar het float-type en drop de Lftd-kolom
+titanic_test["Age"] = [float(item) for item in titanic_test["Age"]]
+
+#dat ga ik corrigeren voor de kolom "Fare", op dezelfde manier, ik maak er een string van, vervang alle komma's door punten
+titanic_test["Fare"] = [str(item) for item in titanic_test["Fare"]]
+titanic_test["Fare"] = [item.replace(",",".") for item in titanic_test["Fare"]]
+#ik maak een extra float kolom Tarief aan om de mediaan te kunnen berekenen
+titanic_test["Tarief"] = [item.replace(",",".") for item in titanic_test["Fare"]]
+titanic_test["Tarief"] = [float(item) for item in titanic_test["Tarief"]]
+
+#de nan-waarden vervang ik door de mediaan. LET OP! Dit moet dezelfde waarde zijn als in de trainingset, dus niet de mediaan van de testset
+titanic_test["Fare"] = [item.replace("nan",medianTarief) for item in titanic_test["Fare"]]
+#ik converteer "Fare" naar het float-type en drop de Tarief-kolom
+titanic_test["Fare"] = [float(item) for item in titanic_test["Fare"]]
+
+#print([titanic_test[column].describe() for column in list(titanic_test)])
+#print(collections.Counter(titanic_test["Age"]))
+
+#print(titanic_test["Sex"].describe())
+#print(titanic_test["Sex"].unique())
+
+#ik vervang male door de waarde 0 en female door de waarde 1
+titanic_test.loc[titanic_test["Sex"] == "male", "Sex"] = 0
+titanic_test.loc[titanic_test["Sex"] == "female", "Sex"] = 1
+
+#print(titanic_test["Sex"].describe())
+#print(titanic_test["Sex"].unique())
+
+#print(titanic_test["Embarked"].unique())
+
+#ik vervang de nan-waarden in Embarked door S, de meest voorkomende code
+titanic_test["Embarked"].fillna('S', inplace=True)
+
+#We'll assign the code 0 to S, 1 to C and 2 to Q. Replace each value in the Embarked column with its corresponding code.
+titanic_test.loc[titanic_test["Embarked"] == "S", "Embarked"] = 0
+titanic_test.loc[titanic_test["Embarked"] == "C", "Embarked"] = 1
+titanic_test.loc[titanic_test["Embarked"] == "Q", "Embarked"] = 2
+
+#print(titanic_test["Embarked"].unique())
+#print(titanic_test["Survived"].describe())
+#print(titanic_test["Pclass"].describe())
+#print(titanic_test["SibSp"].describe())
+#print(titanic_test["Parch"].describe())
+#print(titanic_test["Fare"].describe())
+
+######################################################### GENERATING A SUBMISSION FILE ******************************************************
+
+# Initialize the algorithm class
+
+alg = LogisticRegression(random_state=1)
+
+
+
+# Train the algorithm using all the training data
+alg.fit(titanic[predictors], titanic["Survived"])
+
+# Make predictions using the test set.
+
+predictions = alg.predict(titanic_test[predictors])
+
+
+
+# Create a new dataframe with only the columns Kaggle wants from the dataset.
+
+submission = pd.DataFrame({
+        
+	"PassengerId": titanic_test["PassengerId"],
+        
+	"Survived": predictions
+    
+})
+
+
+print(submission)
+
+
