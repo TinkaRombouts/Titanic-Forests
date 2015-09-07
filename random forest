@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 print("\n Import the data")
 # Import the data
 print("\n X = pd.read_csv...")
-X = pd.read_csv("C:/Users/Tinka/Documents/Kaggle/Titanic/Data/train.csv",delimiter=';')
+X = pd.read_csv("data/train.csv",delimiter=';')
 print("\n y = X.pop(Survived)")
 y = X.pop("Survived")
 # 890, Name: Survived, dtype: int64, waarden: 0,1
