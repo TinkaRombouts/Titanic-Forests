@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 import pandas as pd
 import numpy
 import collections
 
 #inlezen train.csv titanic-file
-titanic = pd.read_csv("data/train.csv",delimiter=';')
+titanic = pd.read_csv("data/train.csv",delimiter=',')
 
 ########################################### PREPARING THE TRAINING DATA SET ###########################################################
 
@@ -89,7 +90,7 @@ titanic.loc[titanic["Embarked"] == "Q", "Embarked"] = 2
 ########################################### PREPARING THE TEST DATA SET ###########################################################
 
 #inlezen test.csv titanic-file
-titanic_test = pd.read_csv("C:/Users/Tinka/Documents/Kaggle/Titanic/Data/test.csv",delimiter=';')
+titanic_test = pd.read_csv("data/test.csv",delimiter=',')
 
 #kolom "Survived" ontbreekt hier
 
@@ -508,8 +509,10 @@ predictions = np.concatenate(predictions, axis=0)
 
 
 # Compute accuracy by comparing to the training data.
-
-accuracy = sum(predictions[predictions == titanic["Survived"]]) / len(predictions)
+# I get an error here, see https://github.com/pydata/pandas/issues/6168
+#accuracy = sum(predictions[predictions == titanic["Survived"]]) / len(predictions)
+bools = (predictions == titanic["Survived"])
+accuracy = sum(pd.Series(predictions)[bools]) / len(predictions)
 
 print(accuracy)
 
@@ -530,7 +533,7 @@ for k,v in title_mapping.items():
 titanic_test["Title"] = titles
 # Check the counts of each unique title.
 
-print(pd.value_counts(titanic_test["Title"]))
+#print(pd.value_counts(titanic_test["Title"]))
 
 
 
@@ -606,5 +609,5 @@ submission = pd.DataFrame({
 
     })
 
-#print(submission)
+print(submission)
 # You can generate a submission file with submission.to_csv("kaggle.csv", index=False).

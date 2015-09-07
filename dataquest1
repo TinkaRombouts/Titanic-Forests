@@ -1,14 +1,15 @@
+#!/usr/bin/env python
 import pandas as pd
 import numpy
 import collections
 
 #inlezen train.csv titanic-file
-titanic = pd.read_csv("data/train.csv",delimiter=';')
+titanic = pd.read_csv("data/train.csv",delimiter=',')
 
 ########################################### PREPARING THE TRAINING DATA SET ###########################################################
 
 #samenvatting van de kolommen, je ziet dat de datatypes veelal fout zijn
-#print([titanic[column].describe() for column in list(titanic)])
+print([titanic[column].describe() for column in list(titanic)])
 
 #dat ga ik corrigeren voor de kolom "Age", ik maak er een string van, vervang alle komma's door punten
 titanic["Age"] = [str(item) for item in titanic["Age"]]
@@ -193,7 +194,7 @@ print(scores.mean())
 ########################################### PREPARING THE TEST DATA SET ###########################################################
 
 #inlezen test.csv titanic-file
-titanic_test = pd.read_csv("C:/Users/Tinka/Documents/Kaggle/Titanic/Data/test.csv",delimiter=';')
+titanic_test = pd.read_csv("data/test.csv",delimiter=',')
 
 
 #kolom "Survived" ontbreekt hier
